@@ -185,6 +185,21 @@ export const SCHEDULE_DOCUMENTS = [
     room: "Lab Matematika A",
     status: "Submitted", // September (VALID for Sept)
   },
+  {
+    id: "SCH-2026-109",
+    schedule_code: "SCH-109-DUP",
+    instructor_id: 1,
+    student_id: "STD-01",
+    student_name: "Aditya Pratama",
+    teaching_grade: "Grade 1",
+    subject: "Aritmatika Dasar (Laporan Duplikat Terkirim Ganda)",
+    date: "2026-10-02",
+    start_time: "09:00",
+    end_time: "10:30",
+    room: "Lab Matematika A",
+    status: "Submitted",
+    is_duplicate: true, // Specifically demonstrates the duplicate report business rule!
+  },
 
   // --- INSTRUCTOR 2: Michael Williams (Part-time) ---
   {
@@ -891,6 +906,14 @@ export const ATTENDANCE_DOCUMENTS = [
     attendance_status: "Attended",
     check_in_time: "08:57",
     student_notes: "Sesi statistika bulan lalu, hadir lengkap.",
+    verified_by: "Academic Lead - S. Siregar",
+  },
+  {
+    id: "ATT-2026-109",
+    schedule_id: "SCH-2026-109",
+    attendance_status: "Attended",
+    check_in_time: "08:58",
+    student_notes: "Laporan duplikat terkirim secara ganda oleh instruktur untuk sesi yang sama.",
     verified_by: "Academic Lead - S. Siregar",
   },
 

@@ -36,6 +36,11 @@ assert.strictEqual(scheduledTest.isEligible, false, 'Submitted + Scheduled MUST 
 assert.strictEqual(scheduledTest.code, 'SCHEDULED');
 console.log('  ✓ [PASS] Submitted + Scheduled -> SCHEDULED (Excluded)');
 
+const duplicateTest = evaluatePayrollEligibility('Submitted', 'Attended', true);
+assert.strictEqual(duplicateTest.isEligible, false, 'Duplicate reports MUST be excluded');
+assert.strictEqual(duplicateTest.code, 'DUPLICATE');
+console.log('  ✓ [PASS] Submitted + Attended (Duplicate) -> DUPLICATE (Excluded)');
+
 // 2. Test joinTeachingSessions data relation extraction
 console.log('\n2. Testing joinTeachingSessions() data relationships:');
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
+import BusinessFlowBanner from './components/BusinessFlowBanner';
 import MetricCards from './components/MetricCards';
 import FilterBar from './components/FilterBar';
 import PayrollSummaryTable from './components/PayrollSummaryTable';
@@ -191,6 +192,13 @@ export default function App() {
     }
   };
 
+  const handleNavigateToSection = (sectionId) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Top Navigation & Status Bar */}
@@ -212,6 +220,9 @@ export default function App() {
 
       {/* Main Content Dashboard */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+        {/* Visual Business Flow & Strict Validation Principles */}
+        <BusinessFlowBanner onNavigateToSection={handleNavigateToSection} />
+
         {/* KPI Metric Overview */}
         <MetricCards
           totalSessions={totalSessionsCount}

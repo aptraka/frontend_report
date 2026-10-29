@@ -1,18 +1,39 @@
 # Instructor Manager Attendance & Payroll Preparation Dashboard
 
-Aplikasi web dashboard berbasis **React.js** untuk manajemen jadwal, pelaporan kehadiran murid, dan rekapitulasi validasi persiapan **payroll instruktur**. Aplikasi ini berarsitektur *front-end only* dengan memadukan **REST API publik DummyJSON** untuk data profil instruktur dan **Local Relational Dataset** untuk dokumen jadwal & presensi.
+Aplikasi web dashboard berbasis **React.js** dan **Tailwind CSS** yang didesain khusus untuk peran **Instructor Manager** guna mengelola jadwal, memvalidasi laporan pertemuan murid dari instruktur, dan menyusun rekapitulasi persiapan payroll untuk diteruskan ke tim Finance. Aplikasi ini berarsitektur *front-end only* dengan memadukan **REST API publik DummyJSON** untuk data profil instruktur dan **Local Relational Dataset** untuk dokumen jadwal & presensi.
+
+---
+
+## 🔄 Alur Bisnis & Role Persona (Business Workflow)
+
+Aplikasi dirancang mengikuti 4 tahapan alur bisnis utama:
+
+```
+[1. Instructor Teaching Reports] ──> [2. Validasi & Klasifikasi] ──> [3. Payroll Preparation] ──> [4. Export Excel Finance]
+   Laporan pertemuan murid              Periode, Instruktur, Grade,       Rekap HANYA pertemuan          Jumlah pertemuan per
+   yang dibuat oleh instruktur          Kepegawaian, Status Pertemuan     yang memenuhi syarat           kategori siap diisi tarif
+```
+
+1. **Instructor Teaching Reports:** Dokumen jadwal dan laporan kehadiran pertemuan murid yang dibuat/diinput oleh instruktur.
+2. **Instructor Manager Dashboard (Validasi & Klasifikasi):** Kontrol filter multi-dimensi (Periode/Date Range, Instructor, Grade 1-4, Status Kepegawaian, Status Pertemuan) untuk mengaudit kelayakan setiap sesi mengajar.
+3. **Payroll Preparation:** Rekapitulasi jumlah pertemuan yang **HANYA** memenuhi syarat kelayakan payroll (payroll eligible).
+4. **Export Excel untuk Finance:** Mengunduh file `.xlsx` yang memuat jumlah pertemuan per kategori, siap diisi tarif per pertemuan (*rate*) oleh tim Finance.
+
+> ⚠️ **Prinsip Validasi Instructor Manager (Sangat Penting):**  
+> **Laporan mengajar BUKAN otomatis pertemuan yang dibayar.**  
+> Sesi dengan murid yang absen (**Absent**), kelas yang dibatalkan (**Cancelled**), laporan masih berupa draf (**Draft**), atau laporan terindikasi **Duplikat** tidak boleh otomatis dihitung sebagai pertemuan yang dibayar tanpa memenuhi aturan bisnis validasi yang ketat.
 
 ---
 
 ## 📌 1. Cara Menjalankan Project
 
 ### Prasyarat
-- **Node.js**: Versi `v18.0.0` atau lebih baru (direkomendasikan Node.js LTS).
+- **Node.js**: Versi `v18.0.0` atau lebih baru.
 - **npm**: Versi `v9.0.0` atau lebih baru.
 
-### Langkah Instalasi & Menjalankan
+### Langkah Instalasi & Eksekusi
 
-1. **Clone atau Buka Direktori Project:**
+1. **Masuk ke Direktori Project:**
    ```bash
    cd "d:/Website Project/frontend_test"
    ```
@@ -26,9 +47,9 @@ Aplikasi web dashboard berbasis **React.js** untuk manajemen jadwal, pelaporan k
    ```bash
    npm run dev
    ```
-   Aplikasi akan berjalan secara lokal di: `http://localhost:3000` (atau port default Vite lainnya).
+   Buka peramban pada alamat lokal: `http://localhost:3000`.
 
-4. **Menjalankan Automated Unit Tests (Business Logic & Payroll Rules):**
+4. **Menjalankan Automated Unit Tests (Aturan Bisnis & Payroll):**
    ```bash
    npm test
    ```
@@ -37,78 +58,64 @@ Aplikasi web dashboard berbasis **React.js** untuk manajemen jadwal, pelaporan k
    ```bash
    npm run build
    ```
-   Hasil build siap di-*deploy* berada di folder `dist/`.
-
-6. **Preview Production Build:**
-   ```bash
-   npm run preview
-   ```
+   Bundle siap rilis akan terkompilasi optimal di folder `dist/`.
 
 ---
 
-## 🏗️ 2. Penjelasan Struktur Mock Data & Relasi Data
+## 🏗️ 2. Dataset yang Dibuat & Relasi Data
 
-Aplikasi ini menggabungkan data dari dua sumber utama di sisi frontend:
+Dataset frontend menggabungkan REST API publik DummyJSON dan dataset relasional lokal di [`src/data/mockData.js`](src/data/mockData.js):
 
-### A. Data Eksternal (DummyJSON REST API)
-- **Endpoint:** `https://dummyjson.com/users?limit=10`
-- Digunakan untuk mengambil data profil instruktur (nama depan, nama belakang, email, avatar, nomor telepon).
-- Memiliki mekanisme *graceful offline fallback* (`src/data/fallbackInstructors.js`) jika koneksi jaringan atau CORS ke API publik mengalami kendala.
+### A. Grade yang Diajar (Teaching Grades)
+Didefinisikan dalam 4 tingkatan:
+- **`Grade 1`**
+- **`Grade 2`**
+- **`Grade 3`**
+- **`Grade 4`**
+> *Aturan Relasi:* Data **Teaching Grade** diekstrak langsung dari **dokumen jadwal murid**.
 
-### B. Local Dataset (Relational Mock Data)
-File data lokal didefinisikan di [`src/data/mockData.js`](src/data/mockData.js):
+### B. Status Instruktur (Employment Status)
+Didefinisikan dalam 3 kategori kepegawaian:
+- **`Full-time`**
+- **`Part-time`**
+- **`Freelance`**
+> *Aturan Relasi:* Data **Employment Status** diekstrak langsung dari **profil Instruktur** (dimapping ke data profil DummyJSON).
 
-#### 1. Instructor Metadata Extension
-Memetakan atribut internal organisasi ke profil instruktur:
-- `employment_status`: `'Full-time'`, `'Part-time'`, atau `'Freelance'` *(Sesuai aturan bisnis, diekstrak dari profil instruktur)*.
-- `department`: Divisi akademik (contoh: *Mathematics Division*, *Robotics & AI*, dll).
-- `staff_code`: Kode staf unik (contoh: `INS-FT-001`, `INS-PT-002`, `INS-FL-003`).
+### C. Status Dokumen Jadwal Murid (Schedule Documents)
+Mencerminkan siklus hidup perencanaan sesi belajar:
+- **`Draft`** *(Rancangan awal, belum disubmit instruktur)* $\rightarrow$ **Excluded**
+- **`Submitted`** *(Laporan sesi resmi telah diserahkan instruktur)* $\rightarrow$ **Kandidat Valid**
+- **`Cancelled`** *(Sesi dibatalkan)* $\rightarrow$ **Excluded**
 
-#### 2. Schedule Documents (Dokumen Jadwal Murid)
-Berisi data perencanaan sesi belajar murid:
-- `id`: Identitas dokumen jadwal (contoh: `SCH-2026-101`).
-- `schedule_code`: Kode singkat sesi.
-- `instructor_id`: *Foreign key* relasi ke user/instruktur DummyJSON.
-- `student_name` & `student_id`: Data identitas murid.
-- `teaching_grade`: Tingkatan murid — `'Grade 1'`, `'Grade 2'`, `'Grade 3'`, `'Grade 4'` *(Sesuai aturan bisnis, diekstrak dari dokumen jadwal)*.
-- `subject`: Mata pelajaran / topik materi.
-- `date`: Tanggal sesi format ISO (`YYYY-MM-DD`).
-- `start_time` & `end_time`: Rentang waktu jam belajar.
-- `room`: Ruang kelas / laboratorium.
-- `status`: Status dokumen jadwal — `'Draft'`, `'Submitted'`, atau `'Cancelled'`.
+### D. Status Dokumen Kehadiran Murid (Attendance Documents)
+Mencerminkan presensi faktual murid pada jadwal terkait:
+- **`Scheduled`** *(Jadwal terdaftar, namun belum berlangsung)* $\rightarrow$ **Excluded**
+- **`Attended`** *(Murid hadir dan mengikuti sesi pembelajaran)* $\rightarrow$ **Kandidat Valid**
+- **`Absent`** *(Murid tidak hadir / izin sakit)* $\rightarrow$ **Excluded**
 
-#### 3. Attendance Documents (Dokumen Presensi Murid)
-Berisi data aktual kehadiran murid pada sesi yang bersangkutan:
-- `id`: Identitas dokumen presensi (contoh: `ATT-2026-101`).
-- `schedule_id`: *Foreign key* relasi ke Schedule Document.
-- `attendance_status`: Status presensi — `'Scheduled'`, `'Attended'`, atau `'Absent'`.
-- `check_in_time`: Jam kedatangan murid (WIB).
-- `student_notes`: Catatan evaluasi materi atau alasan jika murid absen/izin.
-- `verified_by`: Supervisor / Academic Lead yang memverifikasi kehadiran.
+### E. Deteksi Laporan Duplikat
+Sistem secara otomatis mendeteksi jika terdapat laporan ganda dengan instuktur, murid, tanggal, dan jam yang sama, serta menandainya sebagai **`DUPLICATE` (Excluded)** agar tidak terhitung ganda dalam payroll.
 
 ---
 
 ## ⚖️ 3. Aturan Bisnis & Logika Payroll (Business Rules)
 
-Fungsi kalkulasi payroll diimplementasikan secara ketat di [`src/utils/payrollLogic.js`](src/utils/payrollLogic.js) dengan aturan sebagai berikut:
+Diimplementasikan pada [`src/utils/payrollLogic.js`](src/utils/payrollLogic.js):
 
-### ✅ Kondisi Valid (Payroll Eligible)
-Sebuah sesi **HANYA** dihitung masuk ke dalam rekapitulasi payroll jika memenuhi **KEDUA** syarat berikut sekaligus:
-$$\text{Schedule Status} == \text{'Submitted'} \quad \text{DAN} \quad \text{Attendance Status} == \text{'Attended'}$$
+1. **Kondisi Valid:**
+   HANYA jadwal dengan:
+   $$\text{Schedule Status} == \text{'Submitted'} \quad \text{DAN} \quad \text{Attendance Status} == \text{'Attended'}$$
+   yang dihitung masuk ke dalam rekapitulasi payroll.
 
-### ❌ Kondisi Invalid (Strictly Excluded)
-Data pertemuan **TIDAK BOLEH** masuk ke dalam hitungan payroll (langsung di-*skip/exclude*) jika terjadi salah satu kondisi:
-1. Status Jadwal adalah **`Draft`** *(Instruktur belum mengirimkan/men-submit laporan akhir pertemuan)*.
-2. Status Jadwal adalah **`Cancelled`** *(Jadwal telah dibatalkan)*.
-3. Status Kehadiran adalah **`Scheduled`** *(Sesi belum terlaksana / belum ada konfirmasi kehadiran)*.
-4. Status Kehadiran adalah **`Absent`** *(Murid tidak hadir / absen)*.
+2. **Kondisi Invalid (Strictly Exclude):**
+   Jika status jadwal adalah **`Draft`** atau **`Cancelled`**, ATAU status kehadiran adalah **`Scheduled`** atau **`Absent`**, ATAU terindikasi **`Duplikat`**, maka data tersebut **TIDAK BOLEH** masuk ke dalam hitungan payroll (skip/exclude).
 
-### 📅 Filter Rentang Waktu Dinamis
-Rekapitulasi payroll dan KPI metrik secara dinamis mengkalkulasi ulang jumlah sesi yang valid sesuai dengan *Selected Date Range* (`startDate` dan `endDate`) yang dipilih pengguna.
+3. **Filter Rentang Waktu (Selected Date Range):**
+   Rekapitulasi payroll dihitung ulang secara dinamis sesuai dengan rentang tanggal yang dipilih pengguna (misal: *Bulan Ini (Okt 2026)*, *Bulan Lalu (Sep 2026)*, atau tanggal kustom).
 
-### 🔗 Integritas Relasi Data
-- **Teaching Grade** wajib diekstrak dari properti `teaching_grade` pada **dokumen jadwal murid**.
-- **Employment Status** wajib diekstrak dari properti `employment_status` pada **profil instruktur**.
+4. **Integritas Relasi Data:**
+   - Data *Teaching Grade* diekstrak dari dokumen jadwal murid.
+   - Data *Employment Status* diekstrak dari profil instruktur.
 
 ---
 
@@ -116,50 +123,35 @@ Rekapitulasi payroll dan KPI metrik secara dinamis mengkalkulasi ulang jumlah se
 
 | Library | Versi | Alasan & Fungsinya dalam Aplikasi |
 | :--- | :--- | :--- |
-| **`xlsx`** *(SheetJS)* | `^0.18.5` | **Export Spreadsheet Excel (.xlsx):** Library utama yang bertugas mengonversi array data rekapitulasi payroll dan audit trail sesi valid ke dalam format binary workbook Microsoft Excel (`.xlsx`). Mendukung multi-sheet (Sheet Rekapitulasi Ringkasan & Sheet Audit Log Sesi Valid) serta pengaturan lebar kolom otomatis agar siap diproses tim Finance. |
-| **`lucide-react`** | `^0.460.0` | **Iconography UI Modern:** Menyediakan ikon SVG yang ringan, konsisten, dan mudah diakses (seperti `Calendar`, `CheckCircle`, `XCircle`, `FileSpreadsheet`, `Filter`, `DollarSign`, `Users`). |
-| **`tailwindcss`** | `^3.4.14` | **Utility-First Styling:** Membangun antarmuka dashboard yang bersih, responsif, profesional, serta mendukung palet warna status visual (hijau untuk eligible, merah/abu-abu untuk excluded, biru untuk informasi). |
-| **`clsx`** & **`tailwind-merge`** | `^2.1.1` | **Utility Class Merging:** Membantu penggabungan kelas styling dinamis secara aman dan kondisional tanpa duplikasi selector CSS. |
+| **`xlsx`** *(SheetJS)* | `^0.18.5` | **Export Spreadsheet Excel (.xlsx):** Bertugas mengonversi rekapitulasi payroll menjadi file Excel resmi multi-sheet untuk tim Finance. Sheet 1 berisi ringkasan jumlah pertemuan per kategori per instruktur dengan kolom tarif kosong yang siap diisi Finance. Sheet 2 menyajikan *Audit Log* sesi valid sebagai bukti audit. |
+| **`lucide-react`** | `^0.460.0` | **Visual Icons:** Menyediakan ikon SVG yang ringan, konsisten, dan mudah dikenali (Calendar, Clock, CheckCircle, XCircle, FileSpreadsheet, Sliders, Users, AlertTriangle). |
+| **`tailwindcss`** | `^3.4.14` | **Modern Styling:** Membangun antarmuka dashboard responsif dengan visual hierarchy yang jelas antara status valid (hijau) dan excluded (merah/abu-abu). |
+| **`clsx`** & **`tailwind-merge`** | `^2.1.1` | **Dynamic Class Management:** Menggabungkan kelas CSS secara kondisional tanpa konflik selector. |
 
 ---
 
-## 📊 5. Fitur Utama Dashboard
+## 📊 5. Format File Excel untuk Tim Finance
 
-1. **Ringkasan Metrik (KPI Overview Cards):**
-   - *Total Sesi Pertemuan*: Menghitung total jadwal dalam filter aktif.
-   - *Disetujui Payroll (Valid)*: Persentase dan jumlah sesi `Submitted + Attended`.
-   - *Dikecualikan (Excluded)*: Sesi yang di-skip karena `Draft`, `Cancelled`, atau `Absent`.
-   - *Instruktur Aktif*: Jumlah instruktur yang memiliki sesi eligible.
-   - *Estimasi Alokasi Payroll*: Perhitungan acuan honor mengajar berdasarkan *rate per grade*.
+File Excel hasil ekspor ([`src/utils/exportExcel.js`](src/utils/exportExcel.js)) dirancang khusus untuk alur kerja Finance:
 
-2. **Filter & Klasifikasi Lengkap:**
-   - **Periode:** Input *Dari Tanggal* & *Sampai Tanggal* dilengkapi *Quick Presets* ("Semua Periode", "Bulan Ini (Okt 2026)", "Bulan Lalu (Sep 2026)", "Dua Pekan Terakhir").
-   - **Instruktur:** Filter per nama instruktur.
-   - **Teaching Grade:** Filter Grade 1, Grade 2, Grade 3, Grade 4.
-   - **Status Kepegawaian:** Full-time, Part-time, Freelance.
-   - **Status Pertemuan:** Filter cepat untuk sesi Eligible saja, Excluded saja, atau berdasarkan status dokumen spesifik.
-   - **Pencarian Bebas (Search Bar):** Pencarian teks berdasarkan nama murid, materi ajar, atau kode jadwal.
-   - **Reset Filter:** Tombol sekali klik untuk mereset seluruh filter kembali ke kondisi awal.
+- **Sheet 1: `Rekap_Payroll_Finance`**
+  - **Header Dokumen:** Judul resmi, nama verifikator (*Instructor Manager*), periode cut-off, dan catatan aturan validasi.
+  - **Kolom Tabel:**
+    1. No
+    2. Nama Instruktur
+    3. Status Kepegawaian (`Full-time` / `Part-time` / `Freelance`)
+    4. Pertemuan Grade 1
+    5. Pertemuan Grade 2
+    6. Pertemuan Grade 3
+    7. Pertemuan Grade 4
+    8. Total Pertemuan Memenuhi Syarat
+    9. **Tarif per Pertemuan (Rp) [Kolom Kosong Siap Diisi Tim Finance]**
+    10. Total Pembayaran Honor (Rp) [Simulasi / Rumus Finance]
+    11. Verifikasi / Tanda Tangan Tim Finance
+  - **Baris Total:** Akumulasi total pertemuan per grade dan total sesi secara menyeluruh.
 
-3. **Payroll Preparation (Rekapitulasi Persiapan Payroll):**
-   - Tabel ringkasan khusus yang **HANYA** menampilkan data sesi *payroll eligible*.
-   - Mengelompokkan sesi per Instruktur, menampilkan Status Kepegawaian, rincian per grade (`Grade 1`, `Grade 2`, `Grade 3`, `Grade 4`), Total Sesi Disetujui, dan Estimasi Honor.
-   - Dilengkapi *drawer* interaktif untuk simulasi kustomisasi tarif per grade bagi tim Finance.
-   - Baris total keseluruhan (*Grand Totals*) di bagian bawah tabel.
-
-4. **Ekspor File Excel Multi-Sheet (`.xlsx`):**
-   - Tombol **"Export Excel (.xlsx)"** menghasilkan workbook profesional yang memuat:
-     - **Sheet 1 (`Rekap_Payroll_Finance`):** Rekapitulasi jumlah sesi per grade per instruktur, total sesi, dan kolom khusus konfirmasi/tanda tangan tim Finance.
-     - **Sheet 2 (`Audit_Log_Sesi_Valid`):** Log detail setiap baris sesi yang lolos verifikasi (Kode Jadwal, Tanggal, Jam, Nama Murid, Grade, Status Jadwal, Status Kehadiran, Jam Check-In, Catatan, Supervisor).
-
-5. **Laporan Pertemuan Instruktur (Teaching Reports Table):**
-   - Menampilkan seluruh pertemuan (baik yang valid maupun yang dikecualikan) untuk audit akademik.
-   - Tab navigasi cepat: *Semua*, *Disetujui (Eligible)*, dan *Dikecualikan (Excluded)*.
-   - Dilengkapi penomoran, pagination rapi, dan tombol **"Detail"** untuk membuka modal inspeksi.
-
-6. **Modal Detail Dokumen & Presensi:**
-   - Membuka perbandingan berdampingan (*side-by-side*) antara Dokumen Jadwal Murid dan Dokumen Presensi Kehadiran.
-   - Memberikan penjelasan diagnosa eksplisit mengapa suatu sesi dinyatakan *Eligible* atau *Excluded*.
+- **Sheet 2: `Audit_Log_Sesi_Valid`**
+  - Menyajikan log detail setiap sesi yang lolos verifikasi (Kode Jadwal, Tanggal, Jam, Nama Murid, Grade, Topik, Jam Check-In, Catatan Presensi, dan Supervisor).
 
 ---
 
@@ -167,36 +159,36 @@ Rekapitulasi payroll dan KPI metrik secara dinamis mengkalkulasi ulang jumlah se
 
 ```text
 frontend_test/
-├── dist/                          # Hasil production build Vite
-├── public/                        # Static public assets
+├── dist/                              # Output build production Vite
 ├── src/
 │   ├── api/
-│   │   └── instructorApi.js       # Fetch REST API DummyJSON & data enrichment
+│   │   └── instructorApi.js           # REST API integration DummyJSON & fallback
 │   ├── components/
-│   │   ├── Header.jsx             # Top bar branding & indikator koneksi API
-│   │   ├── MetricCards.jsx        # 5 Kartu metrik KPI ringkasan
-│   │   ├── FilterBar.jsx          # Panel kontrol filter periode & kategori
-│   │   ├── PayrollSummaryTable.jsx# Tabel Rekapitulasi Payroll (Eligible ONLY)
-│   │   ├── TeachingReportsTable.jsx# Tabel seluruh laporan pertemuan instruktur
-│   │   └── SessionDetailModal.jsx # Modal inspeksi detail dokumen jadwal & presensi
+│   │   ├── Header.jsx                 # Top bar branding & indikator peran Instructor Manager
+│   │   ├── BusinessFlowBanner.jsx     # Visual Alur Bisnis 4 Langkah & Prinsip Validasi
+│   │   ├── MetricCards.jsx            # 5 Kartu metrik KPI (Total, Valid, Excluded, Instruktur, Estimasi)
+│   │   ├── FilterBar.jsx              # Kontrol Validasi & Klasifikasi (Periode, Instruktur, Grade, Status)
+│   │   ├── PayrollSummaryTable.jsx    # Rekapitulasi Payroll (HANYA Sesi Memenuhi Syarat) & Tombol Ekspor
+│   │   ├── TeachingReportsTable.jsx   # Laporan Pertemuan Murid (Seluruh Sesi & Audit Status)
+│   │   └── SessionDetailModal.jsx     # Modal komparasi Dokumen Jadwal vs Dokumen Presensi
 │   ├── data/
-│   │   ├── fallbackInstructors.js # Data cadangan profil DummyJSON jika offline
-│   │   └── mockData.js            # Metadata instruktur, Dokumen Jadwal, & Dokumen Presensi
+│   │   ├── fallbackInstructors.js     # Data cadangan instruktur DummyJSON (offline-safe)
+│   │   └── mockData.js                # Dataset relasional (Metadata, Jadwal Murid, Presensi Murid)
 │   ├── types/
-│   │   └── constants.js           # Konstanta bisnis (Grades, Employment, Status, Default Rates)
+│   │   └── constants.js               # Definisi Grades 1-4, Status Pegawai, Status Dokumen, Tarif Default
 │   ├── utils/
-│   │   ├── dateUtils.js           # Helper format tanggal & pengecekan rentang waktu
-│   │   ├── exportExcel.js         # Generator workbook XLSX (Rekap + Audit Trail)
-│   │   └── payrollLogic.js        # Logika validasi bisnis & kalkulasi rekapitulasi payroll
-│   ├── App.jsx                    # Komponen utama & state management
-│   ├── index.css                  # Tailwind CSS import & styling global
-│   └── main.jsx                   # Entry point React
+│   │   ├── dateUtils.js               # Helper pemformatan & filter rentang tanggal
+│   │   ├── exportExcel.js             # Generator workbook Excel .xlsx (Rekapitulasi + Audit Log)
+│   │   └── payrollLogic.js            # Evaluator aturan bisnis payroll & deteksi duplikat
+│   ├── App.jsx                        # Komponen utama & state management
+│   ├── index.css                      # Tailwind base & custom font
+│   └── main.jsx                       # Entry point React
 ├── test/
-│   └── payrollLogic.test.js       # Automated Unit Tests untuk aturan bisnis payroll
-├── index.html                     # HTML Template
-├── package.json                   # Konfigurasi dependensi & npm scripts
-├── postcss.config.js              # PostCSS config untuk Tailwind CSS
-├── tailwind.config.js             # Tailwind CSS theme configuration
-├── vite.config.js                 # Konfigurasi bundler Vite dengan chunk splitting
-└── README.md                      # Dokumentasi komprehensif project
+│   └── payrollLogic.test.js           # Automated Unit Tests untuk aturan bisnis payroll
+├── index.html                         # Template HTML utama
+├── package.json                       # Konfigurasi dependensi & npm scripts
+├── postcss.config.js                  # PostCSS plugin Tailwind
+├── tailwind.config.js                 # Konfigurasi Tailwind theme
+├── vite.config.js                     # Konfigurasi Vite & code-splitting
+└── README.md                          # Dokumentasi lengkap alur bisnis & panduan teknis
 ```

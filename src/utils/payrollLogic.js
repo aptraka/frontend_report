@@ -9,14 +9,31 @@ import {
  * Strict Payroll Eligibility Evaluator
  * Business Rule:
  * Valid: Schedule Status === 'Submitted' AND Attendance Status === 'Attended'
- * Invalid (Exclude): Schedule in 'Draft'/'Cancelled' OR Attendance in 'Scheduled'/'Absent'
+ * Invalid (Exclude):
+ * - Duplicate report (Laporan duplikat)
+ * - Schedule in 'Draft'/'Cancelled'
+ * - Attendance in 'Scheduled'/'Absent'
+ *
+ * * Laporan mengajar BUKAN otomatis pertemuan yang dibayar. Sesi dengan murid yang absen,
+ * kelas dibatalkan, atau laporan duplikat tidak boleh otomatis dihitung sebagai pertemuan
+ * yang harus dibayar tanpa aturan bisnis yang jelas.
  *
  * @param {string} scheduleStatus
  * @param {string} attendanceStatus
- * @returns {{ isEligible: boolean, reason: string, code: 'VALID' | 'DRAFT' | 'CANCELLED' | 'ABSENT' | 'SCHEDULED' | 'UNKNOWN' }}
+ * @param {boolean} isDuplicate
+ * @returns {{ isEligible: boolean, reason: string, code: 'VALID' | 'DRAFT' | 'CANCELLED' | 'ABSENT' | 'SCHEDULED' | 'DUPLICATE' | 'UNKNOWN' }}
  */
-export function evaluatePayrollEligibility(scheduleStatus, attendanceStatus) {
-  // Check invalid schedule statuses first
+export function evaluatePayrollEligibility(scheduleStatus, attendanceStatus, isDuplicate = false) {
+  // Check duplicate reports first
+  if (isDuplicate) {
+    return {
+      isEligible: false,
+      reason: 'Laporan Duplikat Terdeteksi (Jadwal ganda murid & jam sama). Tidak boleh dihitung untuk payroll.',
+      code: 'DUPLICATE',
+    };
+  }
+
+  // Check invalid schedule statuses
   if (scheduleStatus === SCHEDULE_STATUSES.DRAFT) {
     return {
       isEligible: false,
@@ -28,7 +45,7 @@ export function evaluatePayrollEligibility(scheduleStatus, attendanceStatus) {
   if (scheduleStatus === SCHEDULE_STATUSES.CANCELLED) {
     return {
       isEligible: false,
-      reason: 'Jadwal dibatalkan (Cancelled)',
+      reason: 'Jadwal / Kelas Dibatalkan (Cancelled)',
       code: 'CANCELLED',
     };
   }
@@ -45,7 +62,7 @@ export function evaluatePayrollEligibility(scheduleStatus, attendanceStatus) {
   if (attendanceStatus === ATTENDANCE_STATUSES.ABSENT) {
     return {
       isEligible: false,
-      reason: 'Murid berstatus Tidak Hadir (Absent)',
+      reason: 'Murid berstatus Tidak Hadir / Absen (Absent)',
       code: 'ABSENT',
     };
   }
@@ -74,6 +91,7 @@ export function evaluatePayrollEligibility(scheduleStatus, attendanceStatus) {
  * Extracts:
  * - teaching_grade FROM Schedule Document
  * - employment_status FROM Instructor Profile
+ * - Detects and flags duplicate teaching reports
  */
 export function joinTeachingSessions(schedules = [], attendances = [], instructors = []) {
   const attendanceMap = new Map();
@@ -85,6 +103,8 @@ export function joinTeachingSessions(schedules = [], attendances = [], instructo
   instructors.forEach((ins) => {
     instructorMap.set(ins.id, ins);
   });
+
+  const seenSessionKeys = new Set();
 
   return schedules.map((sch) => {
     const attendance = attendanceMap.get(sch.id) || {
@@ -108,7 +128,16 @@ export function joinTeachingSessions(schedules = [], attendances = [], instructo
     const teaching_grade = sch.teaching_grade || 'Grade 1';
     const employment_status = instructor.employment_status || 'Freelance';
 
-    const eligibility = evaluatePayrollEligibility(sch.status, attendance.attendance_status);
+    // Duplicate detection: explicit flag or matching duplicate key
+    const duplicateKey = `${sch.instructor_id}_${sch.student_id}_${sch.date}_${sch.start_time}`;
+    let isDuplicate = Boolean(sch.is_duplicate);
+    if (seenSessionKeys.has(duplicateKey)) {
+      isDuplicate = true;
+    } else {
+      seenSessionKeys.add(duplicateKey);
+    }
+
+    const eligibility = evaluatePayrollEligibility(sch.status, attendance.attendance_status, isDuplicate);
 
     return {
       id: sch.id,
@@ -120,6 +149,7 @@ export function joinTeachingSessions(schedules = [], attendances = [], instructo
       subject: sch.subject,
       student_id: sch.student_id,
       student_name: sch.student_name,
+      is_duplicate: isDuplicate,
 
       // Schedule Document attributes
       schedule_status: sch.status,

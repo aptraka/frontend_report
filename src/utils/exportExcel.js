@@ -23,26 +23,29 @@ export function exportPayrollToExcel(payrollData, eligibleSessions = [], filterM
   // SHEET 1: REKAPITULASI PAYROLL (Summary for Finance)
   // -------------------------------------------------------------
   const summaryAoa = [
-    ['REKAPITULASI PERSIAPAN PAYROLL INSTRUKTUR'],
-    ['INSTRUCTOR ATTENDANCE & PAYROLL PREPARATION DASHBOARD'],
+    ['REKAPITULASI JUMLAH PERTEMUAN PAYROLL INSTRUKTUR (UNTUK TIM FINANCE)'],
+    ['INSTRUCTOR MANAGER ATTENDANCE & PAYROLL PREPARATION DASHBOARD'],
     [],
     ['Periode Cut-Off:', periodText],
+    ['Divalidasi Oleh:', 'Instructor Manager'],
     ['Tanggal Ekspor:', new Date().toLocaleString('id-ID')],
     ['Kriteria Validasi:', 'Schedule Status = SUBMITTED & Attendance Status = ATTENDED'],
-    ['Catatan untuk Finance:', 'Kolom "Tarif Estimasi (Rp)" dapat diisi/disesuaikan dengan skema honor per kategori.'],
+    ['Catatan Validasi:', 'Laporan mengajar bukan otomatis dibayar. Sesi absen, kelas dibatalkan, draft, dan duplikat telah dikecualikan.'],
+    ['Instruksi Finance:', 'File ini menyajikan jumlah pertemuan per kategori yang siap diisi tarif (rate) per pertemuan oleh Tim Finance.'],
     [],
     // Table Header
     [
       'No',
       'Nama Instruktur',
       'Status Kepegawaian',
-      'Sesi Grade 1',
-      'Sesi Grade 2',
-      'Sesi Grade 3',
-      'Sesi Grade 4',
-      'Total Sesi Eligible',
-      'Estimasi Honor (Rp)',
-      'Tanda Tangan / Persetujuan Finance',
+      'Pertemuan Grade 1',
+      'Pertemuan Grade 2',
+      'Pertemuan Grade 3',
+      'Pertemuan Grade 4',
+      'Total Pertemuan Memenuhi Syarat',
+      'Tarif per Pertemuan (Rp) [Diisi Finance]',
+      'Total Pembayaran Honor (Rp) [Simulasi]',
+      'Verifikasi / Tanda Tangan Tim Finance',
     ],
   ];
 
@@ -56,8 +59,9 @@ export function exportPayrollToExcel(payrollData, eligibleSessions = [], filterM
       row.grade_breakdown['Grade 3'] || 0,
       row.grade_breakdown['Grade 4'] || 0,
       row.total_eligible_sessions,
+      '', // Kosong siap diisi oleh Tim Finance
       row.estimated_amount,
-      'Pending Review Finance',
+      'Pending Approval Finance',
     ]);
   });
 
@@ -71,6 +75,7 @@ export function exportPayrollToExcel(payrollData, eligibleSessions = [], filterM
     grandTotals['Grade 3'] || 0,
     grandTotals['Grade 4'] || 0,
     grandTotals.total_eligible_sessions || 0,
+    '-',
     grandTotals.total_estimated_amount || 0,
     '',
   ]);
@@ -82,13 +87,14 @@ export function exportPayrollToExcel(payrollData, eligibleSessions = [], filterM
     { wch: 6 },  // No
     { wch: 28 }, // Nama Instruktur
     { wch: 20 }, // Status Kepegawaian
-    { wch: 14 }, // Grade 1
-    { wch: 14 }, // Grade 2
-    { wch: 14 }, // Grade 3
-    { wch: 14 }, // Grade 4
-    { wch: 18 }, // Total Sesi
-    { wch: 22 }, // Estimasi Honor
-    { wch: 30 }, // Tanda Tangan
+    { wch: 18 }, // Grade 1
+    { wch: 18 }, // Grade 2
+    { wch: 18 }, // Grade 3
+    { wch: 18 }, // Grade 4
+    { wch: 32 }, // Total Sesi
+    { wch: 35 }, // Tarif per Pertemuan (Diisi Finance)
+    { wch: 30 }, // Total Pembayaran Honor
+    { wch: 35 }, // Verifikasi / Tanda Tangan
   ];
 
   // -------------------------------------------------------------

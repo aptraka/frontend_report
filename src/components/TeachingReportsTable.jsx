@@ -78,7 +78,7 @@ export default function TeachingReportsTable({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div id="teaching-reports-section" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden scroll-mt-20">
       {/* Table Header & Tabs */}
       <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
@@ -88,10 +88,10 @@ export default function TeachingReportsTable({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                Laporan Pertemuan Instruktur (Teaching Reports)
+                Laporan Pertemuan Murid (Instructor Teaching Reports)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Daftar lengkap seluruh jadwal murid dan dokumen presensi kehadiran
+                Dokumen jadwal dan laporan kehadiran murid yang dibuat oleh instruktur — bukan otomatis dihitung sebagai pertemuan yang dibayar
               </p>
             </div>
           </div>
@@ -263,7 +263,9 @@ export default function TeachingReportsTable({
                           title={session.eligibility_reason}
                         >
                           <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                          <span>Excluded</span>
+                          <span>
+                            {session.is_duplicate ? 'Duplikat (Excluded)' : 'Excluded'}
+                          </span>
                         </div>
                       )}
                     </td>

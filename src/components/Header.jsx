@@ -13,14 +13,14 @@ export default function Header({ apiSource, totalSessions, eligibleCount }) {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Instructor Attendance & Payroll Dashboard
+                  Instructor Manager Attendance & Payroll Dashboard
                 </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                  v1.0
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                  Role: Instructor Manager
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Monitoring Jadwal, Presensi Mengajar, dan Rekapitulasi Validasi Persiapan Payroll
+                Alur Bisnis: Laporan Mengajar → Validasi & Klasifikasi → Payroll Preparation → Export Excel Finance
               </p>
             </div>
           </div>

@@ -45,7 +45,7 @@ export default function PayrollSummaryTable({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div id="payroll-prep-section" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden scroll-mt-20">
       {/* Card Header */}
       <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -55,10 +55,10 @@ export default function PayrollSummaryTable({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                Payroll Preparation: Rekapitulasi Sesi Disetujui
+                Payroll Preparation: Rekapitulasi Jumlah Pertemuan Siap Payroll
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Hanya merangkum pertemuan yang lolos verifikasi (Schedule: <span className="font-semibold text-emerald-700">Submitted</span> & Kehadiran: <span className="font-semibold text-emerald-700">Attended</span>)
+                Jumlah pertemuan per kategori yang memenuhi syarat (Schedule: <span className="font-semibold text-emerald-700">Submitted</span> & Kehadiran: <span className="font-semibold text-emerald-700">Attended</span>) — Siap diisi tarif oleh tim Finance
               </p>
             </div>
           </div>
@@ -87,9 +87,10 @@ export default function PayrollSummaryTable({
             onClick={handleExport}
             disabled={recapRows.length === 0 || isExporting}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-all"
+            title="Export Excel untuk Finance: Jumlah pertemuan per kategori siap diisi tarif"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>{isExporting ? 'Memproses Ekspor...' : 'Export Excel (.xlsx)'}</span>
+            <span>{isExporting ? 'Memproses...' : 'Export Excel untuk Finance (.xlsx)'}</span>
           </button>
         </div>
       </div>
@@ -142,9 +143,9 @@ export default function PayrollSummaryTable({
       <div className="mx-4 sm:mx-5 my-3 p-3 rounded-lg bg-blue-50/70 border border-blue-100 flex items-start gap-2.5 text-xs text-blue-900">
         <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold">Aturan Bisnis Payroll (Strict Rule):</p>
+          <p className="font-semibold">Aturan Bisnis & Validasi Payroll (Instructor Manager Rule):</p>
           <p className="text-blue-800/90 mt-0.5">
-            Sesi berstatus jadwal <strong>Draft</strong> atau <strong>Cancelled</strong>, serta status kehadiran murid <strong>Scheduled</strong> (belum terlaksana) atau <strong>Absent</strong> (absen) <span className="underline font-medium">secara mutlak di-skip/exclude</span> dari tabel ini. File Excel yang diekspor telah dilengkapi sheet Rekapitulasi dan sheet Audit Log Sesi Valid.
+            <strong>Laporan mengajar bukan otomatis pertemuan yang dibayar.</strong> Pertemuan berstatus jadwal <strong>Draft</strong> atau <strong>Cancelled</strong>, murid <strong>Absent</strong> (absen), status <strong>Scheduled</strong> (belum berlangsung), serta <strong>Laporan Duplikat</strong> <span className="underline font-semibold">secara mutlak dikecualikan</span> dari rekapitulasi payroll. Data di bawah ini siap diekspor untuk diisi tarif per pertemuan oleh tim Finance.
           </p>
         </div>
       </div>

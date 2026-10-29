@@ -35,7 +35,7 @@ export default function FilterBar({
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+    <div id="filter-section" className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4 scroll-mt-20">
       {/* Top Header & Presets */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function FilterBar({
             <Filter className="w-4 h-4" />
           </div>
           <span className="text-sm font-semibold text-slate-800">
-            Filter & Klasifikasi Dashboard
+            Validasi & Klasifikasi (Periode · Instruktur · Grade · Kepegawaian · Status Pertemuan)
           </span>
           {activeFilterCount > 0 && (
             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">

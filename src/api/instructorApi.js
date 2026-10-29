@@ -3,10 +3,6 @@ import { FALLBACK_INSTRUCTORS } from '../data/fallbackInstructors';
 
 const DUMMY_JSON_USERS_URL = 'https://dummyjson.com/users?limit=10';
 
-/**
- * Enriches raw DummyJSON user data with local organizational metadata
- * (Employment Status: Full-time, Part-time, Freelance, etc.)
- */
 function enrichInstructor(user) {
   const meta = INSTRUCTOR_METADATA[user.id] || {
     employment_status: 'Freelance',
@@ -24,7 +20,6 @@ function enrichInstructor(user) {
     phone: user.phone,
     avatar: user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.firstName}`,
     company: user.company || { department: meta.department, title: 'Instructor' },
-    // Core relational attribute extracted from Instructor Profile:
     employment_status: meta.employment_status,
     department: meta.department,
     staff_code: meta.staff_code,
