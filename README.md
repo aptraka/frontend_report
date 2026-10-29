@@ -33,15 +33,12 @@ Aplikasi dirancang mengikuti 4 tahapan alur bisnis utama:
 
 ### Langkah Instalasi & Eksekusi
 
-1. Clone Project dari GitHub
-
-Jalankan perintah berikut melalui terminal untuk mengunduh project dari GitHub:
-
-```bash
-cd "d:/Website Project"
-git clone https://github.com/aptraka/frontend_report.git
-cd frontend_report
-```
+1. **Clone Project dari GitHub**
+   ```bash
+   cd "d:/Website Project"
+   git clone https://github.com/aptraka/frontend_report.git
+   cd frontend_report
+   ```
 
 2. **Install Dependencies:**
    ```bash
